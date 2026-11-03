@@ -1,0 +1,112 @@
+Create Procedure ReadCategoria_Procedure
+AS
+Begin
+   Select * From Categoria;
+End
+Go
+
+ALTER PROCEDURE ReadCategoriaById_procedure
+   @Id Int
+As 
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Categoria WHERE id_categoria = @Id)
+	BEGIN
+       RAISERROR('Categoria não encontrada', 16, 1);
+       RETURN;
+    END
+    SELECT * FROM Categoria
+    WHERE  id_categoria=@Id
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+Alter Procedure readByNameCategoria_procedure
+  @Nome Varchar(25)
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Categoria WHERE UPPER(Nome)Like '%'+UPPER(@Nome)+'%')
+	BEGIN
+       RAISERROR('Categoria não encontrada', 16, 1);
+       RETURN;
+    END
+    SELECT * FROM Categoria
+    WHERE UPPER(Nome)Like '%'+UPPER(@Nome)+'%'
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END 
+GO
+
+Alter Procedure CreateCategoria_procedure
+  @Nome Varchar(50),
+  @Descricao Text
+AS
+Begin
+BEGIN TRY
+    IF @Nome Is null
+    BEGIN 
+	    RAISERROR('O nome e obrigatorio', 16,1);
+		RETURN;
+	END
+    If Exists(SELECT 1 FROM Categoria WHERE Nome=@Nome)
+    BEGIN
+      RAISERROR('Ja existe Uma categoria com este nome',16,1);
+    END
+   INSERT INTO Categoria(Nome,descricao)
+   VALUES (@Nome,@Descricao)
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+ALTER Procedure UpdateCategoria_procedure
+   @Id Int,
+   @Nome Nvarchar(100),
+   @Descricao Nvarchar(25)
+AS
+Begin
+BEGIN TRY
+    IF @Nome Is null
+    BEGIN 
+	    RAISERROR('O nome e obrigatorio', 16,1);
+		RETURN;
+	END
+    If Exists(SELECT 1 FROM Categoria WHERE Nome=@Nome)
+    BEGIN
+      RAISERROR('Ja existe Uma categoria com este nome',16,1);
+    END
+    Update Categoria
+    SET Nome=@Nome,descricao=@Descricao
+    Where id_categoria=@Id
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+ALTER Procedure DeleteCategoria_procedure
+  @Id Int
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Categoria WHERE id_categoria = @Id)
+	BEGIN
+       RAISERROR('Categoria não encontrada', 16, 1);
+       RETURN;
+    END
+    Delete From Categoria where id_categoria=@Id
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
