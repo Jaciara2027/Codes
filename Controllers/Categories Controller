@@ -1,0 +1,81 @@
+using Microsoft.AspNetCore.Mvc;
+using StockApi.Models.Stock;
+using StockApi.Services.Categoria;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace StockApi.Controllers
+{
+    [ApiController]/*Indica que a classe e um crontroller api*/
+    [Route("api/[controller]")]/*define a rota "api/Student" pois o contoller se chama StudentsController*/
+    public class CategoriaController : ControllerBase
+    {
+        private readonly Icategoria _categoriaService;
+        public CategoriaController(Icategoria categoriaService)
+        {
+            _categoriaService = categoriaService;
+        }
+        [HttpGet]
+        public IActionResult GetCategorias()
+        {
+            var categoria = _categoriaService.ObterTodas();
+            if (categoria == null)
+            {
+                return NotFound("Categoria Nao encontrada");
+            }
+            return Ok(categoria);
+        }
+        [HttpGet("nome/{nome}")]
+        public IActionResult GetCategoriaByName(string nome)
+        {
+            var categoria = _categoriaService.ObterCategoriaByName( nome);
+            if (categoria == null)
+                return NotFound(new { mensagem = categoria });
+            return Ok(categoria);
+        }
+        [HttpGet("id/{id}")]
+        public IActionResult GetCategoriaById(int id)
+        {
+            var categoria = _categoriaService.ObterCategoria(id);
+            if (categoria == null)
+            {
+                return NotFound("Categoria Nao encontrada");
+            }
+            return Ok(categoria);
+        }
+        [HttpPost]
+        public IActionResult CriarCategoria(string nome, string descricao)
+        {
+            if (string.IsNullOrWhiteSpace(nome) || nome.Length > 50)
+                return BadRequest("O nome e obrigatorio e deve conter menos  de 50 caracteres");
+            var categoria = _categoriaService.Criarcategoria(nome, descricao);
+            if (categoria == false)
+            {
+                return NotFound("A categoria nao foi criada por favor verifique as informacoes inseridas ");
+            }
+            return Ok("Categoria criada com sucesso");
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdatedeCategoria(int id, string nome, string descricao)
+        {
+            var categoria = _categoriaService.Update(id, nome,descricao);
+            if (!categoria)
+            {
+                return NotFound("Categoria nao encontrada");
+            }
+            return Ok("Categoria Atualizada");
+        }
+
+        [HttpDelete]
+        public IActionResult DeleteCategoria(int id)
+        {
+            var categoria = _categoriaService.Delete(id);
+            if (!categoria)
+            {
+                return NotFound("Categoria nao encontrada");
+            }
+            return Ok("Categoria Eliminada!");
+        }
+    }
+}
