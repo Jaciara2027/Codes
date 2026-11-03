@@ -1,0 +1,12 @@
+namespace StockApi.Services.Categoria
+{
+    public interface Icategoria
+    {
+        IEnumerable<dynamic> ObterTodas();
+        dynamic? ObterCategoria(int id);
+        dynamic? ObterCategoriaByName(string nome);
+        bool Criarcategoria(string nome, string descricao);
+        bool Update(int id, string nome, string descricao);
+        bool Delete(int id);
+    }
+}
