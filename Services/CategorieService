@@ -1,0 +1,62 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+namespace StockApi.Services.Categoria
+{
+    public class CategoriaService : Icategoria
+    {
+        private readonly IConfiguration _configuration;
+        public CategoriaService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            }
+        }
+
+        public IEnumerable<dynamic> ObterTodas()
+        {
+            using var connection = Connection;
+            return connection.Query("readCategoria_procedure", commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterCategoria(int id)
+        {
+            using var connection = Connection;
+            return connection.Query("ReadCategoriaById_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterCategoriaByName(string nome)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readByNameCategoria_procedure", new { Nome = nome }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public bool Criarcategoria(string nome, string descricao)
+        {
+            using var connection = Connection;
+            var resultado = connection.Execute("createCategoria_procedure", new { Nome = nome, Descricao = descricao }, commandType: CommandType.StoredProcedure);
+            return resultado > 0;
+        }
+        public bool Update(int id, string nome, string descricao)
+        {
+            using var connection = Connection;
+            var resultado = connection.Execute("Updatecategoria_procedure", new { Id = id, Nome = nome, Descricao = descricao }, commandType: CommandType.StoredProcedure);
+            return resultado > 0;
+        }
+        public bool Delete(int id)
+        {
+            using var connection = Connection;
+            var resultado = connection.Execute("DeleteCategoria_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+            return resultado > 0;
+        }
+    }
+}
