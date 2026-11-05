@@ -1,0 +1,76 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using StockApi.Models.Stock;
+using StockApi.Services.Armazens;
+
+namespace StockApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ArmazensController : ControllerBase
+    {
+        private readonly IArmazens _armazensService;
+        public ArmazensController(IArmazens armazensService)
+        {
+            _armazensService = armazensService;
+        }
+        [HttpGet]
+        public IActionResult GetArmazenss()
+        {
+            var categoria = _armazensService.ObterTodos();
+            return Ok(categoria);
+        }
+        [HttpGet("id/{id}")]
+        public IActionResult GetArmazemById(int id)
+        {
+            var armazem = _armazensService.ObterArmazem(id);
+            if (armazem == null)
+            {
+                return NotFound("Armazem Nao encontrado");
+            }
+            return Ok(armazem);
+        }
+        [HttpGet("nome/{nome}")]
+        public IActionResult GetArmazemByName(string nome)
+        {
+            var armazem = _armazensService.ObterArmazemByName(nome);
+            if (armazem == null)
+            {
+                return NotFound("Armazem Nao encontrado");
+            }
+            return Ok(armazem);
+        }
+        [HttpPost]
+        public IActionResult CriarArmazens(string nome, string endereco, string responsavel)
+        {
+            var armazem = _armazensService.CriarArmazens(nome, endereco,responsavel);
+            if (armazem.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = armazem });
+            }
+            return NotFound(new { mensagem = armazem });
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Updatedearmazem(int id, string nome, string endereco, string responsavel)
+        {
+            var armazem = _armazensService.Update(id,nome,  endereco, responsavel);
+            if (armazem.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = armazem });
+            }
+            return NotFound(new { mensagem = armazem });
+        }
+
+        [HttpDelete]
+        public IActionResult DeleteCategoria(int id)
+        {
+            var armazem = _armazensService.Delete(id);
+            if (armazem.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = armazem });
+            }
+            return NotFound(new { mensagem = armazem });
+        }
+    }
+}
