@@ -1,0 +1,195 @@
+Alter PROCEDURE readMovimentoItens_procedure
+AS
+BEGIN
+    SELECT mi.Id_Item_Movimento,mi.Id_Movimento,p.Nome AS Nome_Produto,mi.Quantidade,mi.Custo_Unitario,mi.Custo_Unitario_venda
+    FROM Movimentos_itens mi
+    INNER JOIN Produtos p ON mi.Id_Produto = p.Id_produtos
+    ORDER BY mi.Id_Item_Movimento;
+END
+GO
+
+Alter PROCEDURE readMovimentoItensById_procedure
+    @Id_Movimento_Item INT
+AS
+BEGIN
+    SELECT mi.Id_Item_Movimento,mi.Id_Movimento,p.Nome AS Nome_Produto,mi.Quantidade,mi.Custo_Unitario,mi.Custo_Unitario_venda
+    FROM Movimentos_itens mi
+    INNER JOIN Produtos p ON mi.Id_Produto = p.Id_produtos
+    ORDER BY mi.Id_Item_Movimento;
+END
+GO
+
+Alter PROCEDURE readMovimentoItensByProduto_procedure
+    @Produto varchar(50)
+AS
+BEGIN
+    SELECT mi.Id_Item_Movimento,mi.Id_Movimento,p.Nome AS Nome_Produto,mi.Quantidade,mi.Custo_Unitario,mi.Custo_Unitario_venda
+    FROM Movimentos_itens mi
+    INNER JOIN Produtos p ON mi.Id_Produto = p.Id_produtos
+    WHERE p.Nome = @Produto
+    ORDER BY mi.Id_Item_Movimento;
+END
+GO
+
+CREATE PROCEDURE readMovimentoItensByArmazem_procedure
+    @Armazem varchar(100)
+AS
+BEGIN
+    SELECT mi.Id_Item_Movimento,mi.Id_Movimento,p.Nome AS Nome_Produto,mi.Quantidade,mi.Custo_Unitario,mi.Custo_Unitario_venda
+    FROM Movimentos_itens mi
+    INNER JOIN Produtos p ON mi.Id_Produto = p.Id_produtos
+	inner join Movimentos m ON mi.id_movimento= m.id_movimento
+	inner join Armazens 
+    WHERE ao.Nome = @Armazem OR ad.Nome=@Armazem
+    ORDER BY mi.Id_Item_Movimento;
+END
+GO
+
+
+Alter PROCEDURE CreateMovimentoItem_procedure
+    @Id_Movimento INT,
+    @Id_Produto INT,
+    @Quantidade DECIMAL(18,4),
+    @Custo_Unitario DECIMAL(18,4) = 0,
+    @Custo_Unitario_Venda DECIMAL(18,4) = 0
+AS
+BEGIN
+BEGIN TRY
+    IF @Id_Movimento IS NULL
+    BEGIN
+        RAISERROR('ID do movimento é obrigatório', 16, 1);
+        RETURN
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Movimentos WHERE id_movimento = @Id_Movimento)
+    BEGIN
+        RAISERROR('Movimento não encontrado', 16, 1);
+        RETURN
+    END
+    IF EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento AND Estado != 'pendente')
+    BEGIN
+        RAISERROR('Apenas movimentos em rascunho podem receber itens', 16, 1);
+        RETURN
+    END
+
+    IF @Id_Produto IS NULL
+    BEGIN
+        RAISERROR('Produto é obrigatório', 16, 1);
+        RETURN
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Produtos WHERE Id_produtos = @Id_Produto)
+    BEGIN
+        RAISERROR('Produto não existe', 16, 1);
+        RETURN
+    END
+
+    IF @Quantidade <= 0
+    BEGIN
+        RAISERROR('Quantidade deve ser maior que zero', 16, 1);
+        RETURN
+    END
+
+    INSERT INTO Movimentos_itens (
+        Id_Movimento, Id_Produto, Quantidade,
+        Custo_Unitario, Custo_Unitario_venda
+    )
+    VALUES (
+        @Id_Movimento, @Id_Produto, @Quantidade,
+        @Custo_Unitario, @Custo_Unitario_Venda
+    )
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+Alter PROCEDURE UpdateMovimentoItem_procedure
+    @Id_Item_Movimento Int,
+    @Id_Produto INT,
+    @Quantidade DECIMAL(18,4),
+    @Custo_Unitario DECIMAL(18,4) = NULL,
+    @Custo_Unitario_Venda DECIMAL(18,4) = NULL
+AS
+BEGIN
+BEGIN TRY
+    IF @Id_Item_Movimento IS NULL
+    BEGIN
+        RAISERROR('ID do item é obrigatório', 16, 1);
+        RETURN
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Movimentos_itens WHERE id_Item_movimento = @Id_Item_Movimento)
+    BEGIN
+        RAISERROR('Item não encontrado', 16, 1);
+        RETURN
+    END
+
+    -- Verifica se o movimento é rascunho
+    IF EXISTS (SELECT 1 FROM Movimentos_itens mi
+        INNER JOIN Movimentos m ON mi.id_movimento = m.id_movimento
+        WHERE mi.id_Item_movimento = @Id_Item_Movimento AND m.Estado != 'pendente'
+    )
+    BEGIN
+        RAISERROR('Apenas itens de movimentos em rascunho podem ser alterados', 16, 1);
+        RETURN;
+    END
+
+    IF @Id_Produto IS NULL
+    BEGIN
+        RAISERROR('Produto é obrigatório', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Produtos WHERE Id_produtos = @Id_Produto)
+    BEGIN
+        RAISERROR('Produto não existe', 16, 1);
+        RETURN
+    END
+
+    IF @Quantidade <= 0
+    BEGIN
+        RAISERROR('Quantidade deve ser maior que zero', 16, 1);
+        RETURN;
+    END
+
+    -- 2. Atualizar
+    UPDATE Movimentos_itens
+    SET 
+        Id_Produto = @Id_Produto,
+        Quantidade = @Quantidade,
+        Custo_Unitario = @Custo_Unitario,
+        Custo_Unitario_venda = @Custo_Unitario_Venda
+    WHERE Id_Item_Movimento = @Id_Item_Movimento;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END 
+
+Go
+
+CREATE PROCEDURE DeleteMovimentosItens_procedure
+@Id INT
+AS
+BEGIN
+Begin Try 
+IF @Id IS NULL
+BEGIN
+RAISERROR('ID do Item Movimentado  é obrigatório', 16, 1);
+RETURN;
+END
+
+IF NOT EXISTS (SELECT 1 FROM Movimentos_itens WHERE id_Item_movimento = @Id)
+BEGIN
+RAISERROR('Item Movimetado  não encontrado', 16, 1);
+RETURN;
+END
+
+DELETE FROM Movimentos_itens WHERE id_Item_movimento = @Id;
+end try
+begin catch
+throw;
+end catch
+End
