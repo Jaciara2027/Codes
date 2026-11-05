@@ -1,0 +1,12 @@
+namespace StockApi.Services.Movimentos_item
+{
+    public interface IMovimentos_item
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterMovimentoItem(int id);
+        dynamic? ObterMovimentoItemByProduto(string produto);
+        string CriarMovimentoItem(int id_movimento, int id_Produto, int quantidade, int custo_Unitario, int Custo_Unitario_Venda);
+        string Update(int id, int id_produto, int quantidade, int custo_unitario, int custo_unitario_venda);
+        string Delete(int id);
+    }
+}
