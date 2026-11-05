@@ -1,0 +1,124 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace StockApi.Services.Produtos
+{
+    public class ProdutosService:IProdutos
+    {
+        private readonly IConfiguration _configuration;
+        public ProdutosService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            }
+        }
+        public IEnumerable<dynamic> ObterTodos()
+        {
+            using var connection = Connection;
+            return connection.Query("ReadProdutos_procedure", commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterProduto(int id)
+        {
+            using var connection = Connection;
+            try{
+                return connection.Query("ReadProdutoById_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+            }catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterProdutoByName(string nome)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readProdutosByName_procedure", new { Nome = nome }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string CriarProduto(string nome, string codigo_de_barras, int id_categoria, string unidade_de_medida, string descricao, int estoque_minimo, int estoque_maximo )
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("CreateProduto_procedure", new
+                {
+                    Nome = nome,
+                    Codigo_de_Barras = codigo_de_barras,
+                    Id_categoria = id_categoria,
+                    Unidade_de_Medida = unidade_de_medida,
+                    Descricao = descricao,
+                    Estoque_Minimo = estoque_minimo,
+                    Estoque_Maximo = estoque_maximo
+                }, commandType: CommandType.StoredProcedure);
+                return "Produto criado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Update(int id, string nome, string codigo_de_barras, int id_categoria, string unidade_de_medida, string descricao, int estoque_minimo, int estoque_maximo)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("UpdateProduto_procedure", new
+                {
+                    Id = id,
+                    Nome = nome,
+                    Codigo_de_Barras = codigo_de_barras,
+                    Id_categoria = id_categoria,
+                    Unidade_de_Medida = unidade_de_medida,
+                    Descricao = descricao,
+                    Estoque_Minimo = estoque_minimo,
+                    Estoque_Maximo = estoque_maximo
+                }, commandType: CommandType.StoredProcedure);
+                return "Produtos atualizado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Delete(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("DeleteCategoria_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+                return "Apagado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public bool validarCodigodeBarras(string codigo_de_barras)
+        {
+            if (codigo_de_barras.Length != 13 || !codigo_de_barras.All(char.IsDigit))
+                return false;
+            return true;
+        }
+        public void validarEstoque(int estoque_minimo, int estoque_maximo)
+        {
+            if (estoque_maximo <= estoque_minimo)
+                throw new Exception ("O estoque minimo nao pode ser  menor ou igual nem estoque maximo ");
+            if (estoque_maximo - estoque_minimo < 5)
+                throw new Exception("A diferenca entre estoque minimo tem que ser maior que 5 ");
+            if (estoque_maximo > 1000)
+                throw new Exception("O limite do estoque e 1000");
+            if (estoque_minimo < 0)
+                throw new Exception("O estoque minimo tem que ser maior que zero");
+        }
+    }
+}
