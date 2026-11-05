@@ -1,0 +1,215 @@
+CREATE PROCEDURE ReadFuncionarios_procedure
+AS
+BEGIN
+    SELECT 
+        Id,
+        Name,
+        Apelido,
+        Idade,
+        Cargo,
+        Telefone,
+        Endereco,
+        Salario,
+        Ativo
+    FROM Funcionarios
+    ORDER BY Name, Apelido;
+END
+GO
+
+CREATE PROCEDURE readFuncionarioById_procedure
+    @Id_Funcionario INT
+AS
+BEGIN
+    SELECT 
+        Id,
+        Name,
+        Apelido,
+        Idade,
+        Cargo,
+        Telefone,
+        Endereco,
+        Salario,
+        Ativo
+    FROM Funcionarios
+    WHERE Id = @Id_Funcionario;
+END
+GO
+
+Alter PROCEDURE readFuncionarioByName_procedure
+    @Nome NVARCHAR(100)
+AS
+BEGIN
+    SELECT 
+        Id,
+        Name,
+        Apelido,
+        Idade,
+        Cargo,
+        Telefone,
+        Endereco,
+        Salario,
+        Ativo
+    FROM Funcionarios
+    WHERE Upper(Name) LIKE '%'+UPPER(@Nome)+'%'
+	ORDER BY Name,Apelido
+END
+GO
+CREATE PROCEDURE readFuncionariosAtivos_procedure
+AS
+BEGIN
+    SELECT 
+        Id,
+        Name,
+        Apelido,
+        Idade,
+        Cargo,
+        Telefone,
+        Endereco,
+        Salario,
+        Ativo
+    FROM Funcionarios
+    WHERE Ativo = 1
+    ORDER BY Name, Apelido;
+END
+GO
+
+
+CREATE PROCEDURE CreateFuncionario_procedure
+    @Nome NVARCHAR(100),
+    @Apelido NVARCHAR(50),
+    @Idade INT,
+    @Cargo NVARCHAR(50),
+    @Telefone DECIMAL(9,0),
+    @Endereco TEXT,
+    @Salario DECIMAL(15,5),
+    @Ativo BIT = 1
+AS
+BEGIN
+BEGIN TRY
+    IF @Nome IS NULL OR @Apelido IS NULL OR @Cargo IS NULL
+    BEGIN
+        RAISERROR('Nome, Apelido e Cargo são obrigatórios', 16, 1);
+        RETURN;
+    END
+
+    IF @Idade < 18 OR @Idade > 100
+    BEGIN
+        RAISERROR('Idade deve ser entre 18 e 100 anos', 16, 1);
+        RETURN;
+    END
+
+    IF @Salario <= 0
+    BEGIN
+        RAISERROR('Salário deve ser maior que zero', 16, 1);
+        RETURN;
+    END
+
+    IF @Telefone IS NULL OR LEN(CAST(@Telefone AS VARCHAR)) < 9
+    BEGIN
+        RAISERROR('Telefone inválido', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Funcionarios (
+        Name, Apelido, Idade, Cargo, 
+        Telefone, Endereco, Salario, Ativo
+    )
+    VALUES (
+        @Nome, @Apelido, @Idade, @Cargo,
+        @Telefone, @Endereco, @Salario, @Ativo
+    );
+
+    SELECT SCOPE_IDENTITY() AS Id_Funcionario;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+CREATE PROCEDURE UpdateFuncionario_procedure
+    @Id_Funcionario INT,
+    @Nome NVARCHAR(100),
+    @Apelido NVARCHAR(50),
+    @Idade INT,
+    @Cargo NVARCHAR(50),
+    @Telefone DECIMAL(9,0),
+    @Endereco TEXT,
+    @Salario DECIMAL(15,5),
+    @Ativo BIT
+AS
+BEGIN
+BEGIN TRY
+    IF @Id_Funcionario IS NULL
+    BEGIN
+        RAISERROR('ID do funcionário é obrigatório', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Funcionarios WHERE Id = @Id_Funcionario)
+    BEGIN
+        RAISERROR('Funcionário não encontrado', 16, 1);
+        RETURN;
+    END
+
+    IF @Nome IS NULL OR @Apelido IS NULL OR @Cargo IS NULL
+    BEGIN
+        RAISERROR('Nome, Apelido e Cargo são obrigatórios', 16, 1);
+        RETURN;
+    END
+
+    IF @Idade < 18 OR @Idade > 100
+    BEGIN
+        RAISERROR('Idade deve ser entre 18 e 100 anos', 16, 1);
+        RETURN;
+    END
+
+    IF @Salario <= 0
+    BEGIN
+        RAISERROR('Salário deve ser maior que zero', 16, 1);
+        RETURN;
+    END
+
+    UPDATE Funcionarios
+    SET 
+        Name = @Nome,
+        Apelido = @Apelido,
+        Idade = @Idade,
+        Cargo = @Cargo,
+        Telefone = @Telefone,
+        Endereco = @Endereco,
+        Salario = @Salario,
+        Ativo = @Ativo
+    WHERE Id= @Id_Funcionario;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+CREATE PROCEDURE DeleteFuncionario_procedure
+    @Id_Funcionario INT
+AS
+BEGIN
+BEGIN TRY
+    IF @Id_Funcionario IS NULL
+    BEGIN
+        RAISERROR('ID do funcionário é obrigatório', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Funcionarios WHERE Id= @Id_Funcionario)
+    BEGIN
+        RAISERROR('Funcionário não encontrado', 16, 1);
+        RETURN;
+    END
+
+    UPDATE Funcionarios
+    SET Ativo = 0
+    WHERE Id = @Id_Funcionario;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
