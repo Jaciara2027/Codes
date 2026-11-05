@@ -1,0 +1,155 @@
+Alter Procedure ReadProdutos_procedure
+AS
+Begin 
+Select p.Id_produtos,p.Nome,p.Codigo_de_Barras,p.Unidade_de_medida,p.descricao,p.estoque_maximo,p.estoque_minimo,c.Nome As Nome_da_Categoria from Produtos p
+Inner Join Categoria c ON p.id_categoria= c.id_categoria Order by p.Nome;
+end
+Go
+
+Alter Procedure ReadProdutoById_procedure
+@Id Int
+AS
+Begin
+begin try
+If Not exists (Select 1 from Produtos where Id_produtos=@Id)
+   Begin 
+	   RAISERROR('O Id Introduzido nao existe ', 16,1);
+	end
+If @Id<=0
+   Begin 
+	   RAISERROR('O Id tem que ser maior ou igual a 1', 16,1);
+	end
+
+Select p.Id_produtos,p.Nome,p.Codigo_de_Barras,p.Unidade_de_medida,p.descricao,p.estoque_maximo,p.estoque_minimo,c.Nome As Nome_da_Categoria from Produtos p
+Inner Join Categoria c ON p.id_categoria= c.id_categoria
+Where p.Id_produtos=@Id
+end try
+begin catch
+throw;
+end catch
+end
+Go
+
+Alter Procedure readProdutosByName_procedure
+@Nome Varchar(100)
+AS
+Begin
+Begin try
+If Not exists (Select 1 from Produtos where Nome=@Nome)
+   Begin 
+	   RAISERROR('O Nome Introduzido nao existe ', 16,1);
+	end
+Select p.Id_produtos,p.Nome,p.Codigo_de_Barras,p.Unidade_de_medida,p.descricao,p.estoque_maximo,p.estoque_minimo,c.Nome As Nome_da_Categoria from Produtos p
+Inner Join Categoria c ON p.id_categoria= c.id_categoria
+Where UPPER(p.Nome) Like '%'+Upper(@Nome)+'%'
+end try
+begin catch
+throw;
+end catch
+end
+Go
+
+Alter Procedure CreateProduto_procedure
+@Nome Nvarchar(100),
+@Codigo_de_Barras Varchar(50),
+@Id_Categoria int,
+@Unidade_de_Medida Varchar(10),
+@Descricao text,
+@Estoque_Minimo Int,
+@Estoque_Maximo Int
+AS
+Begin 
+  Begin Try
+     if @Nome Is null Or @Codigo_de_barras Is Null or @Unidade_de_Medida is Null
+   Begin 
+	   RAISERROR('Nome,Codigo de barras  e a unidade de medida sao obrigatorios', 16,1);
+	end
+
+	if Exists (Select 1 from Produtos where UPPER(Nome)=UPPER(@Nome))
+	Begin
+	  RAISERROR('Ja existe um produto com este nome',16,1);
+	end
+
+	IF Len(@Codigo_de_Barras) NOT IN (8, 13)
+	   begin 
+	     RAISERROR('O codigo de barras tem que ter 8 ou 13 numeros',16,1);
+	  end
+	if RTRIM(LTRIM(@Codigo_de_Barras))  LIKE '%[^0-9]%'
+	   begin 
+	     RAISERROR('O codigo de barras deve conter apenas numeros',16,1);
+	  end
+	if Exists(Select 1 from Produtos where Codigo_de_Barras=@Codigo_de_Barras)
+	   Begin 
+	    RAISERROR('Ja existe este codigo de barras',16,1);
+	   end 
+
+	If Not exists (Select 1 from Categoria where id_categoria=@Id_Categoria)
+	   begin
+	     RAISERROR('A categoria inserida nao existe',16,1);
+	   end  
+Insert Into Produtos(Nome,Codigo_de_Barras,id_categoria,Unidade_de_medida,descricao,estoque_maximo,estoque_minimo)
+Values (@Nome,@Codigo_de_barras,@Id_Categoria,@Unidade_de_Medida,@Descricao,@Estoque_Maximo,@Estoque_Minimo)
+end Try
+Begin Catch
+  Throw;
+end catch
+end;
+go
+
+Alter Procedure UpdateProduto_procedure
+@Id Int,
+@Nome Nvarchar(100),
+@Codigo_de_Barras Varchar(50),
+@Id_Categoria int,
+@Unidade_de_Medida Varchar(10),
+@Descricao text,
+@Estoque_Minimo Int,
+@Estoque_Maximo Int
+AS
+Begin
+  Begin Try
+     if @Nome Is null Or @Codigo_de_barras Is Null or @Unidade_de_Medida is Null
+   Begin 
+	   RAISERROR('Nome,Codigo de barras  e a unidade de medida sao obrigatorios', 16,1);
+	end
+
+	if Exists (Select 1 from Produtos where UPPER(Nome)=UPPER(@Nome))
+	Begin
+	  RAISERROR('Ja existe um produto com este nome',16,1);
+	end
+
+	IF Len(@Codigo_de_Barras) NOT IN (8, 13)
+	   begin 
+	     RAISERROR('O codigo de barras tem que ter 8 ou 13 numeros',16,1);
+	  end
+	if RTRIM(LTRIM(@Codigo_de_Barras))  LIKE '%[^0-9]%'
+	   begin 
+	     RAISERROR('O codigo de barras deve conter apenas numeros',16,1);
+	  end
+	if Exists(Select 1 from Produtos where Codigo_de_Barras=@Codigo_de_Barras)
+	   Begin 
+	    RAISERROR('Ja existe este codigo de barras',16,1);
+	   end 
+
+	If Not exists (Select 1 from Categoria where id_categoria=@Id_Categoria)
+	   begin
+	     RAISERROR('A categoria inserida nao existe',16,1);
+	   end 
+Update Produtos
+Set Nome=@Nome,Codigo_de_Barras=@Codigo_de_barras,id_categoria=@Id_Categoria,Unidade_de_medida=@Unidade_de_Medida,
+descricao=@Descricao,estoque_maximo=@Estoque_Maximo,estoque_minimo=@Estoque_Minimo
+where Id_produtos=@Id
+end Try
+Begin Catch
+  Throw;
+end catch
+end
+Go
+
+Create Procedure deleteproduto_procedure
+@Id int
+As 
+Begin
+Delete From Produtos where Id_produtos= @Id;
+end
+go
