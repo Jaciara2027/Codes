@@ -1,0 +1,13 @@
+namespace StockApi.Services.Estoque_atual
+{
+    public interface IEstoqueAtual
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterEstoque(int id);
+        dynamic? ObterEstoqueByProduto(string produto);
+        dynamic? ObterEstoqueByArmazem(string armazem);
+        string CriarEstoque(int id_Produto, int id_armazem, int quantidade, string lote, DateTime?  data_validade= null);
+        string Update(int id,int quantidade, string lote, DateTime? data_validade = null);
+        string Delete(int id);
+    }
+}
