@@ -1,0 +1,122 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+namespace StockApi.Services.Funcionario
+{
+    public class FuncionarioService : IFuncionario
+    {
+        private readonly IConfiguration _configuration;
+        public FuncionarioService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            }
+        }
+        public IEnumerable<dynamic> ObterTodos()
+        {
+            using var connection = Connection;
+            return connection.Query("ReadFuncionarios_procedure", commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterFuncionarios(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readFuncionarioById_procedure", new { Id_Funcionario= id }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterFuncionarioByStatus()
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("ReadFuncionarios_procedure", commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterFuncionarioByName(string nome)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readFuncionarioByName_procedure", new { Nome = nome }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string CriarFuncionario(string nome, string apelido, int idade, string cargo, decimal telefone, string endereco, decimal salario, bool ativo)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("CreateFuncionario_procedure", new
+                {
+                    Nome = nome,
+                    Apelido=apelido,
+                    Idade = idade,
+                    Cargo = cargo,
+                    Telefone = telefone,
+                    Endereco=endereco,
+                    Salario=salario,
+                    Ativo=ativo
+                }, commandType: CommandType.StoredProcedure);
+                return "Funcionario criado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Update(int id_funcionario, string nome, string apelido, int idade, string cargo, decimal telefone, string endereco, decimal salario, bool ativo)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("UpdateFuncionario_procedure", new
+                {
+                    Id_Funcionario = id_funcionario,
+                    Nome = nome,
+                    Apelido = apelido,
+                    Idade = idade,
+                    Cargo = cargo,
+                    Telefone = telefone,
+                    Endereco = endereco,
+                    Salario = salario,
+                    Ativo = ativo
+                }, commandType: CommandType.StoredProcedure);
+                return "Atualizado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Delete(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("DeleteFuncionario_procedure", new { Id_Funcionario = id }, commandType: CommandType.StoredProcedure);
+                return "Apagado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+    }
+}
