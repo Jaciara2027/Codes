@@ -1,0 +1,152 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+namespace StockApi.Services.Movimentos
+{
+    public class MovimentosService : IMovimentos
+    {
+        private readonly IConfiguration _configuration;
+        public MovimentosService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            }
+        }
+        public IEnumerable<dynamic> ObterTodos()
+        {
+            using var connection = Connection;
+            return connection.Query("ReadMovimentos_procedure", commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterMovimento(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("ReadMovimentoById_procedure", new { Id_Movimento= id }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterMovimentoByStatus(string status)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("ReadMovimentoByStatus_procedure", new { Status = status }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterMovimentoByTipo(string Tipo)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("ReadMovimentoByTipo_procedure", new { Tipo = Tipo }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterMovimentoByAOrigem(string nome_armazem_origem)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("ReadMovimentoByOrigem_procedure", new { Nome_Armazem_Origem= nome_armazem_origem }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterMovimentoByADestino(string nome_armazem_destino)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("ReadMovimentoByDestino_procedure", new { Nome_Armazem_Destino = nome_armazem_destino }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string CriarMovimento(string tipo, int id_armazem_origem, int id_armazem_destino, int id_cliente, string observacao, string status)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("CreateMovimento_procedure", new
+                {
+                    Tipo = tipo,
+                    Id_Armazem_Origem = id_armazem_origem,
+                    Id_Armazem_Destino = id_armazem_destino,
+                    Id_Cliente=id_cliente,
+                    Observacao = observacao,
+                    Status = status
+                }, commandType: CommandType.StoredProcedure);
+                return "Movimento criado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Delete(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("DeleteCategoria_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+                return "Apagado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Movimento_Confirmado(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("ConfirmarMovimento_procedure", new
+                {
+                    Id_Movimento = id
+                }, commandType: CommandType.StoredProcedure);
+                return "Confirmado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Movimento_Cancelado(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("CancelarMovimento_procedure", new
+                {
+                    Id_Movimento = id
+                }, commandType: CommandType.StoredProcedure);
+                return "Cancelado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+    }
+}
