@@ -1,0 +1,73 @@
+using Microsoft.AspNetCore.Mvc;
+using StockApi.Models.Stock;
+using StockApi.Services.Movimentos;
+using StockApi.Services.Movimentos_item;
+namespace StockApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class Movimentos_itemController : ControllerBase
+    {
+        private readonly IMovimentos_item  _movimentos_itemService;
+        public Movimentos_itemController(IMovimentos_item movimentos_itemService)
+        {
+            _movimentos_itemService = movimentos_itemService;
+        }
+        [HttpGet]
+        public IActionResult GetMovimentos()
+        {
+            var movimento_item = _movimentos_itemService.ObterTodos();
+            return Ok(movimento_item);
+        }
+        [HttpGet("id/{id}")]
+        public IActionResult GetProdutosByEstoqueId(int id)
+        {
+            var movimento_item = _movimentos_itemService.ObterMovimentoItem(id);
+            if (movimento_item == null)
+            {
+                return NotFound("Movimento do item Nao encontrado");
+            }
+            return Ok(movimento_item);
+        }
+        [HttpGet("Produto/{Produto}")]
+        public IActionResult GetProdutosByproduto(string produto)
+        {
+            var movimento_item = _movimentos_itemService.ObterMovimentoItemByProduto(produto);
+            if (movimento_item == null)
+            {
+                return NotFound("Movimento do item Nao encontrado");
+            }
+            return Ok(movimento_item);
+        }
+        [HttpPost]
+        public IActionResult CreateMovimento_item(int id_movimento,int id_produto, int quantidade, int custo_unitario, int custo_unitario_venda)
+        {
+            var movimento_item = _movimentos_itemService.CriarMovimentoItem(id_movimento,id_produto, quantidade,custo_unitario, custo_unitario_venda);
+            if (movimento_item.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento_item});
+            }
+            return NotFound(new { mensagem = movimento_item });
+        }
+        [HttpPut("id/{id}")]
+        public IActionResult UpdateMovimentoItem(int id, int id_produto, int quantidade, int custo_unitario, int custo_unitario_venda)
+        {
+            var movimento_item = _movimentos_itemService.Update(id, id_produto,quantidade, custo_unitario, custo_unitario_venda);
+            if (movimento_item.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento_item });
+            }
+            return NotFound(new { mensagem = movimento_item });
+        }
+        [HttpDelete("id/{id}")]
+        public IActionResult DeleteMovimento(int id)
+        {
+            var movimento_item = _movimentos_itemService.Delete(id);
+            if (movimento_item.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento_item });
+            }
+            return NotFound(new { mensagem = movimento_item });
+        }
+    }
+}
