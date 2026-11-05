@@ -1,0 +1,114 @@
+using Microsoft.AspNetCore.Mvc;
+using StockApi.Services.Movimentos;
+
+namespace StockApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class MovimentosController : ControllerBase
+    {
+        private readonly IMovimentos _movimentosService;
+        public MovimentosController(IMovimentos movimentosService)
+        {
+            _movimentosService = movimentosService;
+        }
+        [HttpGet]
+        public IActionResult GetMovimentos()
+        {
+            var movimento = _movimentosService.ObterTodos();
+            return Ok(movimento);
+        }
+        [HttpGet("Tipo/{tipo}")]
+        public IActionResult GetMovimentotosByTipo(string tipo)
+        {
+            var movimento = _movimentosService.ObterMovimentoByTipo(tipo);
+            if (movimento == null)
+            {
+                return NotFound("Movimento Nao encontrado");
+            }
+            return Ok(movimento);
+        }
+        [HttpGet("id/{id}")]
+        public IActionResult GetMovimentosbyId(int id)
+        {
+            var movimento = _movimentosService.ObterMovimento( id);
+            if (movimento == null)
+            {
+                return NotFound("Movimento Nao encontrado");
+            }
+            return Ok(movimento);
+        }
+        [HttpGet("Status/{status}")]
+        public IActionResult GetMovimentosbySatus(string status)
+        {
+            var movimento = _movimentosService.ObterMovimentoByStatus(status);
+            if (movimento == null)
+            {
+                return NotFound("Movimento Nao encontrado");
+            }
+            return Ok(movimento);
+        }
+        [HttpGet("Origem/{nome_armazem_origem}")]
+        public IActionResult GetMovimentosbyOrigem(string nome_armazem_origem)
+        {
+            var movimento = _movimentosService.ObterMovimentoByAOrigem( nome_armazem_origem);
+            if (movimento == null)
+            {
+                return NotFound("Movimento Nao encontrado");
+            }
+            return Ok(movimento);
+        }
+        [HttpGet("Destino/{nome_armazem_destino}")]
+        public IActionResult GetMovimentosbyDestino(string nome_armazem_destino)
+        {
+            var movimento = _movimentosService.ObterMovimentoByADestino(nome_armazem_destino);
+            if (movimento == null)
+            {
+                return NotFound("Movimento Nao encontrado");
+            }
+            return Ok(movimento);
+        }
+        [HttpPost]
+        public IActionResult CreateMovimento(string tipo, int id_armazem_origem, int id_armazem_destino,int id_cliente, string observacao, string status)
+        {
+            if (string.IsNullOrWhiteSpace(tipo) || string.IsNullOrWhiteSpace(status))
+                return BadRequest("O tipo e o estado do movimento tem que sao obrigatorios");
+            var movimento = _movimentosService.CriarMovimento(tipo,id_armazem_origem,id_armazem_destino,id_cliente,observacao,status);
+            if (movimento.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento });
+            }
+            return NotFound(new { mensagem = movimento });
+        }
+        [HttpPut("id_movimentoCancelado/{id_movimento}")]
+        public IActionResult UpdatedeMovimentoCancelado(int id_movimento)
+        {
+            var movimento = _movimentosService.Movimento_Cancelado(id_movimento);
+            if (movimento.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento });
+            }
+            return NotFound(new { mensagem = movimento});
+        }
+        [HttpDelete]
+        public IActionResult DeleteMovimento(int id)
+        {
+            var movimento = _movimentosService.Delete(id);
+            if (movimento.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento });
+            }
+            return NotFound(new { mensagem = movimento});
+        }
+        [HttpPut("id_movimentoconfirmado/{id_movimentoconfirmado}")]
+        public IActionResult UpdatedeConfirmado(int id_movimentoconfirmado)
+        {
+            var movimento = _movimentosService.Movimento_Confirmado(id_movimentoconfirmado);
+            if (movimento.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = movimento });
+            }
+            return NotFound(new { mensagem = movimento });
+        }
+    }
+}
