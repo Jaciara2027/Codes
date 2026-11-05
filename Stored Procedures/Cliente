@@ -1,0 +1,137 @@
+ALTER Procedure createCliente_Procedure
+   @Nome Nvarchar(100),
+   @Apelido nvarchar(25),
+   @Telefone varchar (15),
+   @Email nvarchar(25)
+AS
+BEGIN 
+BEGIN TRY
+    IF @Nome IS NULL OR @Apelido IS NULL OR @Telefone IS NULL
+	BEGIN
+       RAISERROR('Nome , Apelido e Telefone e obrigatorio', 16, 1);
+       RETURN;
+    END
+	IF @Telefone IS NULL OR LEN(CAST(@Telefone AS VARCHAR)) < 9
+    BEGIN
+        RAISERROR('Telefone inválido', 16, 1);
+        RETURN;
+    END
+	IF @Email IS NULL OR  (@Email Like '%@%' AND @Email Like '%.%')
+	BEGIN 
+	    RAISERROR('Verifique o seu Email',16,1);
+		RETURN;
+	END
+    INSERT INTO Clientes (Nome,Apelido,Telefone,Email)
+    VALUES (@Nome,@Apelido,@Telefone,@Email)
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END 
+GO
+
+Create Procedure readClientes_Procedure
+AS
+Begin
+   Select * From Clientes;
+End;
+Go
+
+ALTER Procedure ReadClienteById_Procedure
+   @Id Int
+As 
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Clientes WHERE id_cliente = @Id)
+	BEGIN
+       RAISERROR('Cliente  não encontrado', 16, 1);
+       RETURN;
+    END
+    SELECT * From Clientes
+    Where id_cliente=@Id;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+ALTER Procedure readClientebyName_procedure
+@Nome Varchar(50)
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Clientes WHERE  UPPER(Nome) Like '%'+UPPER(@Nome)+'%')
+	BEGIN
+       RAISERROR('Cliente não encontrado', 16, 1);
+       RETURN;
+	END
+    Select * From Clientes where UPPER(Nome) LIKE '%'+UPPER(@Nome)+'%'
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+
+ALter Procedure UpdateCliente_Procedure
+   @Id Int,
+   @Nome Nvarchar(100),
+   @Apelido Nvarchar(25),
+   @Telefone Nvarchar(15),
+   @Email Nvarchar(25),
+   @Ativo Bit
+AS
+Begin
+BEGIN TRY
+    IF @Nome IS NULL OR @Apelido IS NULL OR @Telefone IS NULL
+	BEGIN
+       RAISERROR('Nome , Apelido e Telefone e obrigatorio', 16, 1);
+       RETURN;
+    END
+	IF EXISTS (SELECT 1 FROM Clientes WHERE UPPER(@Nome)=UPPER(Nome) AND UPPER(@Apelido) =UPPER(Apelido))
+	BEGIN
+	   RAISERROR('Nome , Apelido e Telefone e obrigatorio', 16, 1);
+       RETURN;
+    END
+
+	IF @Telefone IS NULL OR LEN(CAST(@Telefone AS VARCHAR)) < 9
+    BEGIN
+        RAISERROR('Telefone inválido', 16, 1);
+        RETURN;
+    END
+	IF @Email is Null or (@Email Like '%@%' AND @Email Like '%.%')
+	BEGIN 
+	    RAISERROR('Verifique o seu Email',16,1);
+		RETURN;
+	END
+  Update Clientes
+  SET Nome=@Nome,Apelido=@Apelido,Telefone=@Telefone,Email=@Email,Ativo=@Ativo
+  Where id_cliente=@Id
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+Alter Procedure DeleteCliente_Procedure
+  @Id Int
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Clientes WHERE id_cliente = @Id)
+	BEGIN
+       RAISERROR('Cliente  não encontrado', 16, 1);
+       RETURN;
+    END
+  Delete From Clientes where id_cliente=@Id
+End TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+
+Alter table Clientes
+ADD CONSTRAINT chk_Email CHECK (Email is Null or (Email Like '%@%' AND Email Like '%.%')); 
