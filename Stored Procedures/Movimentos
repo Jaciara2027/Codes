@@ -1,0 +1,401 @@
+Alter PROCEDURE CreateMovimento_procedure
+@Tipo VARCHAR(20),
+@Id_Armazem_Origem INT = NULL,
+@Id_Armazem_Destino INT = NULL,
+@Id_Cliente INT = NULL,
+@Observacao TEXT = NULL,
+@Status VARCHAR(20) = 'rascunho'
+AS
+BEGIN
+Begin try
+IF @Tipo IS NULL OR Lower(@Tipo)NOT IN
+('entrada','saida','transferencia','ajuste')
+BEGIN
+RAISERROR('Tipo de movimento inválido', 16, 1);
+RETURN
+END
+IF Lower(@Status) NOT IN ('pendente','confirmado','cancelado')
+BEGIN
+RAISERROR('Status inválido', 16, 1);
+RETURN;
+END
+IF Lower(@Tipo) = 'entrada'AND @Id_Armazem_Destino IS NULL
+BEGIN
+RAISERROR('Armazém destino é obrigatório para
+entrada', 16, 1);
+RETURN;
+END
+IF Lower(@Tipo) ='saida' AND @Id_Armazem_Origem IS NULL
+BEGIN
+RAISERROR('Armazém origem é obrigatório para saída',
+16, 1);
+RETURN
+END
+IF Lower(@Tipo) = 'transferencia' AND (@Id_Armazem_Origem IS
+NULL OR @Id_Armazem_Destino IS NULL)
+BEGIN
+RAISERROR('Armazém origem e destino são obrigatórios
+para transferência', 16, 1);
+RETURN
+END
+IF @Id_Armazem_Origem IS NOT NULL AND NOT EXISTS
+(SELECT 1 FROM Armazens WHERE id_armazem =
+@Id_Armazem_Origem)
+BEGIN
+RAISERROR('Armazém origem não existe', 16, 1);
+RETURN
+END
+IF @Id_Armazem_Destino IS NOT NULL AND NOT
+EXISTS (SELECT 1 FROM Armazens WHERE id_armazem
+= @Id_Armazem_Destino)
+BEGIN
+RAISERROR('Armazém destino não existe', 16, 1);
+RETURN
+END
+IF Not Exists (Select 1 From Clientes where id_cliente = @Id_Cliente)
+Begin
+Raiserror('Cliente não existe',16,1);
+Return
+END
+INSERT INTO Movimentos (Tipo, Data_Hora, id_armazem_origem,
+id_armazem_destino,
+id_cliente, Observacao, Estado
+)
+VALUES (
+@Tipo, GETDATE(), @Id_Armazem_Origem,
+@Id_Armazem_Destino,
+@Id_Cliente, @Observacao, @Status
+)
+end try
+begin catch
+throw;
+end catch
+END
+Go
+
+CREATE PROCEDURE ReadMovimentos_procedure
+AS
+BEGIN
+    SELECT m.Id_Movimento,m.Tipo,m.Data_Hora,m.Id_Armazem_Origem,ao.Nome AS Nome_Armazem_Origem,m.Id_Armazem_Destino,
+        ad.Nome AS Nome_Armazem_Destino,m.Id_Cliente,c.Nome AS Nome_Cliente,m.Observacao,m.Estado
+    FROM Movimentos m
+    LEFT JOIN Armazens ao ON m.Id_Armazem_Origem = ao.Id_Armazem
+    LEFT JOIN Armazens ad ON m.Id_Armazem_Destino = ad.Id_Armazem
+    LEFT JOIN Clientes c ON m.Id_Cliente = c.Id_Cliente
+    ORDER BY m.Data_Hora DESC;
+END
+GO
+
+CREATE PROCEDURE ReadMovimentoById_procedure
+    @Id_Movimento INT
+AS
+BEGIN
+    SELECT m.id_movimento,m.Tipo,m.Data_Hora,ao.Nome AS Armazem_Origem,ad.Nome AS Armazem_Destino,
+	m.id_cliente,c.Nome AS Nome_Cliente,m.Observacao,m.Estado
+    FROM Movimentos m
+    LEFT JOIN Armazens ao ON m.Id_Armazem_Origem = ao.Id_Armazem
+    LEFT JOIN Armazens ad ON m.Id_Armazem_Destino = ad.Id_Armazem
+    LEFT JOIN Clientes c ON m.Id_Cliente = c.Id_Cliente
+    WHERE m.id_movimento = @Id_Movimento;
+END
+GO
+
+Alter PROCEDURE ReadMovimentoByDestino_procedure
+    @Nome_Armazem_Destino Varchar(100)
+AS
+BEGIN
+    SELECT m.id_movimento,m.Tipo,m.Data_Hora,ao.Nome AS Armazem_Origem,ad.Nome AS Armazem_Destino,
+	m.id_cliente,c.Nome AS Nome_Cliente,m.Observacao,m.Estado
+    FROM Movimentos m
+    LEFT JOIN Armazens ao ON m.Id_Armazem_Origem = ao.Id_Armazem
+    LEFT JOIN Armazens ad ON m.Id_Armazem_Destino = ad.Id_Armazem
+    LEFT JOIN Clientes c ON m.Id_Cliente = c.id_cliente
+    WHERE ad.Nome= @Nome_Armazem_Destino;
+END
+GO
+
+Alter PROCEDURE ReadMovimentoByOrigem_procedure
+    @Nome_Armazem_Origem Varchar(100)
+AS
+BEGIN
+    SELECT m.id_movimento,m.Tipo,m.Data_Hora,ao.Nome AS Armazem_Origem,ad.Nome AS Armazem_Destino,
+	m.id_cliente,c.Nome AS Nome_Cliente,m.Observacao,m.Estado
+    FROM Movimentos m
+    LEFT JOIN Armazens ao ON m.Id_Armazem_Origem = ao.Id_Armazem
+    LEFT JOIN Armazens ad ON m.Id_Armazem_Destino = ad.Id_Armazem
+    LEFT JOIN Clientes c ON m.Id_Cliente = c.Id_Cliente
+    WHERE ao.Nome = @Nome_Armazem_Origem;
+END
+GO
+
+CREATE PROCEDURE ReadMovimentoByTipo_procedure
+    @Tipo varchar(20) 
+AS
+BEGIN
+    SELECT m.id_movimento,m.Tipo,m.Data_Hora,ao.Nome AS Armazem_Origem,ad.Nome AS Armazem_Destino,
+	m.id_cliente,c.Nome AS Nome_Cliente,m.Observacao,m.Estado
+    FROM Movimentos m
+    LEFT JOIN Armazens ao ON m.Id_Armazem_Origem = ao.Id_Armazem
+    LEFT JOIN Armazens ad ON m.Id_Armazem_Destino = ad.Id_Armazem
+    LEFT JOIN Clientes c ON m.Id_Cliente = c.Id_Cliente
+    WHERE Lower(m.Tipo) =@Tipo;
+END
+GO
+
+CREATE PROCEDURE ReadMovimentoByStatus_procedure
+    @Status varchar(20) 
+AS
+BEGIN
+    SELECT m.id_movimento,m.Tipo,m.Data_Hora,ao.Nome AS Armazem_Origem,ad.Nome AS Armazem_Destino,
+	m.id_cliente,c.Nome AS Nome_Cliente,m.Observacao,m.Estado
+    FROM Movimentos m
+    LEFT JOIN Armazens ao ON m.Id_Armazem_Origem = ao.Id_Armazem
+    LEFT JOIN Armazens ad ON m.Id_Armazem_Destino = ad.Id_Armazem
+    LEFT JOIN Clientes c ON m.Id_Cliente = c.Id_Cliente
+    WHERE lower(m.Estado) = @Status;
+END
+GO
+
+
+CREATE PROCEDURE DeleteMovimento_procedure
+    @Id_Movimento INT
+AS
+BEGIN
+BEGIN TRY
+    IF @Id_Movimento IS NULL
+    BEGIN
+        RAISERROR('ID do movimento é obrigatório', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento)
+    BEGIN
+        RAISERROR('Movimento não encontrado', 16, 1);
+        RETURN;
+    END
+    IF EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento AND Estado != 'pendente')
+    BEGIN
+        RAISERROR('Apenas movimentos em rascunho podem ser deletados', 16, 1);
+        RETURN;
+    END
+    DELETE FROM Movimentos_itens WHERE Id_Movimento = @Id_Movimento;
+    DELETE FROM Movimentos WHERE Id_Movimento = @Id_Movimento;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+CREATE PROCEDURE ConfirmarMovimento_procedure
+    @Id_Movimento INT
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Movimentos WHERE id_movimento = @Id_Movimento)
+    BEGIN
+        RAISERROR('Movimento não encontrado', 16, 1);
+        RETURN;
+    END
+    IF EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento AND UPPER(Estado) =UPPER( 'confirmado'))
+    BEGIN
+        RAISERROR('Movimento já está confirmado', 16, 1);
+        RETURN;
+    END
+
+    UPDATE Movimentos 
+    SET Estado ='confirmado'
+    WHERE Id_Movimento = @Id_Movimento;
+
+    --Atualiza estoque 
+    DECLARE @Tipo VARCHAR(20);
+    DECLARE @Id_Armazem_Origem INT;
+    DECLARE @Id_Armazem_Destino INT;
+
+    SELECT @Tipo = Tipo, @Id_Armazem_Origem = Id_Armazem_Origem, @Id_Armazem_Destino = Id_Armazem_Destino
+    FROM Movimentos WHERE Id_Movimento = @Id_Movimento;
+
+    -- Entrada:soma no destino
+    IF @Tipo = 'entrada'
+    BEGIN
+        UPDATE e
+        SET e.Quantidade = e.Quantidade + mi.Quantidade
+        FROM Estoque_Atual e
+        INNER JOIN Movimentos_itens mi ON e.Id_Produto = mi.Id_Produto
+        WHERE e.Id_Armazem = @Id_Armazem_Destino
+        AND mi.Id_Movimento = @Id_Movimento;
+    END
+
+    -- Saída:subtrai da origem
+    IF @Tipo = 'saida'
+    BEGIN
+        UPDATE e
+        SET e.Quantidade = e.Quantidade - mi.Quantidade
+        FROM Estoque_Atual e
+        INNER JOIN Movimentos_itens mi ON e.Id_Produto = mi.Id_Produto
+        WHERE e.Id_Armazem = @Id_Armazem_Origem
+        AND mi.Id_Movimento = @Id_Movimento;
+    END
+
+    -- Transferência: subtrai origem e soma destino
+    IF @Tipo = 'transferencia'
+    BEGIN
+        UPDATE e
+        SET e.Quantidade = e.Quantidade - mi.Quantidade
+        FROM Estoque_Atual e
+        INNER JOIN Movimentos_itens mi ON e.Id_Produto = mi.Id_Produto
+        WHERE e.Id_Armazem = @Id_Armazem_Origem
+        AND mi.Id_Movimento = @Id_Movimento;
+
+        UPDATE e
+        SET e.Quantidade = e.Quantidade + mi.Quantidade
+        FROM Estoque_Atual e
+        INNER JOIN Movimentos_itens mi ON e.Id_Produto = mi.Id_Produto
+        WHERE e.Id_Armazem = @Id_Armazem_Destino
+        AND mi.Id_Movimento = @Id_Movimento;
+    END
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+CREATE PROCEDURE CancelarMovimento_procedure
+    @Id_Movimento INT
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento)
+    BEGIN
+        RAISERROR('Movimento não encontrado', 16, 1);
+        RETURN;
+    END
+    IF EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento AND Estado = 'cancelado')
+    BEGIN
+        RAISERROR('Movimento já está cancelado', 16, 1);
+        RETURN;
+    END
+
+    IF EXISTS (SELECT 1 FROM Movimentos WHERE Id_Movimento = @Id_Movimento AND Estado = 'confirmado')
+    BEGIN
+        DECLARE @Tipo VARCHAR(20);
+        DECLARE @Id_Armazem_Origem INT;
+        DECLARE @Id_Armazem_Destino INT;
+
+        SELECT @Tipo = Tipo, @Id_Armazem_Origem = id_armazem_origem, @Id_Armazem_Destino = id_armazem_destino
+        FROM Movimentos WHERE id_movimento = @Id_Movimento;
+
+        -- subtrai do destino
+        IF @Tipo = 'entrada'
+        BEGIN
+            UPDATE e
+            SET e.Quantidade = e.Quantidade - mi.Quantidade
+            FROM Estoque_Atual e
+            INNER JOIN Movimentos_itens mi ON e.Id_Produto = mi.Id_Produto
+            WHERE e.Id_Armazem = @Id_Armazem_Destino
+            AND mi.Id_Movimento = @Id_Movimento;
+        END
+
+        -- soma na origem
+        IF @Tipo = 'saida'
+        BEGIN
+            UPDATE e
+            SET e.Quantidade = e.Quantidade + mi.Quantidade
+            FROM Estoque_Atual e
+            INNER JOIN Movimentos_itens mi ON e.id_produto = mi.id_produto
+            WHERE e.id_armazem = @Id_Armazem_Origem
+            AND mi.id_movimento = @Id_Movimento;
+        END
+
+        -- soma origem, subtrai destino
+        IF @Tipo = 'transferencia'
+        BEGIN
+            UPDATE e
+            SET e.Quantidade = e.Quantidade + mi.Quantidade
+            FROM Estoque_Atual e
+            INNER JOIN Movimentos_itens mi ON e.id_produto = mi.id_produto
+            WHERE e.id_armazem = @Id_Armazem_Origem
+            AND mi.id_movimento = @Id_Movimento;
+
+            UPDATE e
+            SET e.Quantidade = e.Quantidade - mi.Quantidade
+            FROM Estoque_Atual e
+            INNER JOIN Movimentos_itens mi ON e.id_produto = mi.id_produto
+            WHERE e.id_armazem = @Id_Armazem_Destino
+            AND mi.id_movimento = @Id_Movimento;
+        END
+    END
+
+    UPDATE Movimentos SET Estado = 'cancelado' WHERE id_movimento = @Id_Movimento;
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+GO
+
+Create Procedure Updatemovimento_procedure
+@Id int ,
+@Tipo Varchar(20),
+@Id_Armazem_Origem int,
+@Id_Armazem_Destino int,
+@Observacao text,
+@Id_Cliente int 
+As
+Begin
+Begin try
+IF @Tipo IS NULL OR Lower(@Tipo)NOT IN
+('entrada','saida','transferencia','ajuste')
+BEGIN
+RAISERROR('Tipo de movimento inválido', 16, 1);
+RETURN
+END
+IF Lower(@Tipo) = 'entrada'AND @Id_Armazem_Destino IS NULL
+BEGIN
+RAISERROR('Armazém destino é obrigatório para
+entrada', 16, 1);
+RETURN;
+END
+IF Lower(@Tipo) ='saida' AND @Id_Armazem_Origem IS NULL
+BEGIN
+RAISERROR('Armazém origem é obrigatório para saída',
+16, 1);
+RETURN
+END
+IF Lower(@Tipo) = 'transferencia' AND (@Id_Armazem_Origem IS
+NULL OR @Id_Armazem_Destino IS NULL)
+BEGIN
+RAISERROR('Armazém origem e destino são obrigatórios
+para transferência', 16, 1);
+RETURN
+END
+IF @Id_Armazem_Origem IS NOT NULL AND NOT EXISTS
+(SELECT 1 FROM Armazens WHERE id_armazem =
+@Id_Armazem_Origem)
+BEGIN
+RAISERROR('Armazém origem não existe', 16, 1);
+RETURN
+END
+IF @Id_Armazem_Destino IS NOT NULL AND NOT
+EXISTS (SELECT 1 FROM Armazens WHERE id_armazem
+= @Id_Armazem_Destino)
+BEGIN
+RAISERROR('Armazém destino não existe', 16, 1);
+RETURN
+END
+IF Not Exists (Select 1 From Clientes where id_cliente = @Id_Cliente)
+Begin
+Raiserror('Cliente não existe',16,1);
+Return
+END
+Update Movimentos
+Set Tipo=@Tipo,Data_Hora=GETDATE(),id_armazem_origem=@Id_Armazem_Origem,id_armazem_destino=@Id_Armazem_Destino,id_cliente=@Id_Cliente,
+    Observacao=@Observacao
+Where id_movimento=@Id;
+end try
+begin catch
+throw;
+end catch
+END
+Go
