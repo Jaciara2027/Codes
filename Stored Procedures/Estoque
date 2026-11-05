@@ -1,0 +1,165 @@
+CREATE PROCEDURE ReadEstoque_procedure
+AS
+BEGIN
+SELECT e.id_estoque,p.Nome AS Nome_Produto,a.Nome AS Nome_Armazem,e.Quantidade,e.Lote,e.Data_Validade
+FROM Estoque_Atual e
+INNER JOIN Produtos p ON e.Id_Produto = p.Id_produtos
+INNER JOIN Armazens a ON e.Id_Armazem = a.Id_Armazem
+ORDER BY p.Nome, a.Nome;
+END
+Go
+
+Create Procedure readEstoqueById_procedure
+@Id int
+AS
+Begin
+SELECT e.id_estoque,p.Nome AS Nome_Produto,a.Nome AS Nome_Armazem,e.Quantidade,e.Lote,e.Data_Validade
+FROM Estoque_Atual e
+INNER JOIN Produtos p ON e.Id_Produto = p.Id_produtos
+INNER JOIN Armazens a ON e.Id_Armazem = a.Id_Armazem
+Where p.Id_produtos=@Id
+ORDER BY p.Nome, a.Nome;
+END
+Go
+
+Create Procedure readEstoqueByProduto_procedure
+@Nome varchar
+AS
+Begin
+SELECT e.id_estoque,p.Nome AS Nome_Produto,a.Nome AS Nome_Armazem,e.Quantidade,e.Lote,e.Data_Validade
+FROM Estoque_Atual e
+INNER JOIN Produtos p ON e.Id_Produto = p.Id_produtos
+INNER JOIN Armazens a ON e.Id_Armazem = a.Id_Armazem
+Where  UPPER(p.Nome) Like '%'+UPPER(@Nome)+'%'
+ORDER BY p.Nome, a.Nome;
+END
+Go
+
+Create Procedure readEstoqueByArmazem_procedure
+@Armazem_Nome varchar
+AS
+Begin
+SELECT e.id_estoque,p.Nome AS Nome_Produto,a.Nome AS Nome_Armazem,e.Quantidade,e.Lote,e.Data_Validade
+FROM Estoque_Atual e
+INNER JOIN Produtos p ON e.Id_Produto = p.Id_produtos
+INNER JOIN Armazens a ON e.Id_Armazem = a.Id_Armazem
+Where  UPPER(a.Nome) Like '%'+UPPER(@Armazem_Nome)+'%'
+ORDER BY p.Nome,a.Nome;
+END
+Go
+
+CREATE PROCEDURE CreateEstoque_procedure
+@Id_Produto INT,
+@Id_Armazem INT,
+@Quantidade DECIMAL(18,4),
+@Lote VARCHAR(50) = NULL,
+@Data_Validade DATE = NULL
+AS
+BEGIN
+begin try 
+IF @Id_Produto IS NULL OR @Id_Armazem IS NULL
+BEGIN
+RAISERROR('Produto e Armazém são obrigatórios', 16,
+1);
+RETURN
+END
+IF @Quantidade < 0
+BEGIN
+RAISERROR('Quantidade não pode ser negativa', 16, 1);
+RETURN
+END
+IF NOT EXISTS (SELECT 1 FROM Produtos WHERE
+Id_produtos = @Id_Produto)
+BEGIN
+RAISERROR('Produto não existe', 16, 1);
+RETURN;
+END
+IF NOT EXISTS (SELECT 1 FROM Armazens WHERE
+id_armazem = @Id_Armazem)
+BEGIN
+RAISERROR('Armazém não existe', 16, 1);
+RETURN;
+END
+IF EXISTS (SELECT 1 FROM Estoque_Atual WHERE
+Id_Produto = @Id_Produto AND Id_Armazem =
+@Id_Armazem)
+BEGIN
+RAISERROR('Já existe estoque para este produto neste
+armazém', 16, 1);
+RETURN;
+END
+INSERT INTO Estoque_Atual (
+id_produto, id_armazem, Quantidade, Lote,
+Data_Validade
+)
+VALUES (
+@Id_Produto, @Id_Armazem, @Quantidade, @Lote,
+@Data_Validade
+);
+end try
+begin catch
+throw;
+end catch
+END
+Go
+
+CREATE PROCEDURE UpdateEstoque_procedure
+@Id_Estoque INT,
+@Quantidade DECIMAL(18,4),
+@Lote VARCHAR(50) = NULL,
+@Data_Validade DATE = NULL
+AS
+BEGIN
+Begin try
+IF @Id_Estoque IS NULL
+BEGIN
+RAISERROR('ID do estoque é obrigatório', 16, 1);
+RETURN
+END
+IF @Quantidade < 0
+BEGIN
+RAISERROR('Quantidade não pode ser negativa', 16, 1);
+RETURN;
+END
+IF NOT EXISTS (SELECT 1 FROM Estoque_Atual WHERE
+id_estoque = @Id_Estoque)
+BEGIN
+RAISERROR('Estoque não encontrado', 16, 1);
+RETURN;
+END
+UPDATE Estoque_Atual
+SET
+Quantidade = @Quantidade,
+Lote = @Lote,
+Data_Validade = @Data_Validade
+WHERE id_estoque = @Id_Estoque;
+end try
+begin catch
+throw;
+end catch
+END
+Go
+
+CREATE PROCEDURE DeleteEstoque_procedure
+@Id_Estoque INT
+AS
+BEGIN
+Begin Try 
+IF @Id_Estoque IS NULL
+BEGIN
+RAISERROR('ID do estoque é obrigatório', 16, 1);
+RETURN;
+END
+
+IF NOT EXISTS (SELECT 1 FROM Estoque_Atual WHERE Id_Estoque = @Id_Estoque)
+BEGIN
+RAISERROR('Estoque não encontrado', 16, 1);
+RETURN;
+END
+
+DELETE FROM Estoque_Atual WHERE Id_Estoque = @Id_Estoque;
+end try
+begin catch
+throw;
+end catch
+End
