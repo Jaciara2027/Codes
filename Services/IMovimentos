@@ -1,0 +1,16 @@
+namespace StockApi.Services.Movimentos
+{
+    public interface IMovimentos
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterMovimento(int id);
+        dynamic? ObterMovimentoByStatus(string status);
+        dynamic? ObterMovimentoByTipo(string Tipo);
+        dynamic? ObterMovimentoByAOrigem(string nome_armazem_origem);
+        dynamic? ObterMovimentoByADestino(string nome_armazem_destino);
+        string CriarMovimento(string tipo, int id_armazem_origem,int id_armazem_destino,int id_cliente,string observacao, string status);
+        string Delete(int id);
+        string Movimento_Confirmado(int id);
+        string Movimento_Cancelado(int id);
+    }
+}
