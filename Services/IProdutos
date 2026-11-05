@@ -1,0 +1,14 @@
+namespace StockApi.Services.Produtos
+{
+    public interface IProdutos
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterProduto(int id);
+        dynamic? ObterProdutoByName(string nome);
+        string CriarProduto(string nome, string codigo_de_barras,int id_categoria,string unidade_de_medida,string descricao,int estoque_minimo,int estoque_maximo);
+        string Update(int id, string nome, string codigo_de_barras, int id_categoria, string unidade_de_medida, string descricao, int estoque_minimo, int estoque_maximo);
+        string Delete(int id);
+        bool validarCodigodeBarras(string codigo_de_barras);
+        void validarEstoque(int estoque_minimo,int estoque_maximo);
+    }
+}
