@@ -1,0 +1,12 @@
+namespace StockApi.Services.Armazens
+{
+    public interface IArmazens
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterArmazem(int id);
+        dynamic? ObterArmazemByName(string nome);
+        string CriarArmazens(string nome, string endereco,string responsavel);
+        string Update(int id, string nome, string descricao,string responsavel);
+        string Delete(int id);
+    }
+}
