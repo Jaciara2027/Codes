@@ -1,0 +1,156 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using StockApi.Models.Stock;
+using StockApi.Services.Estoque_atual;
+using StockApi.Services.Movimentos;
+using System.Security.Cryptography;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace StockApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class EstoqueAtualController : ControllerBase
+    {
+        private readonly IEstoqueAtual _estoqueAtualService;
+        public EstoqueAtualController(IEstoqueAtual estoqueAtualService)
+        {
+            _estoqueAtualService = estoqueAtualService;
+        }
+        [HttpGet]
+        public IActionResult Gettodos()
+        {
+            var estoque = _estoqueAtualService.ObterTodos();
+            return Ok(estoque);
+        }
+        [HttpGet("estoque_id/{estoque_id}")]
+        public IActionResult GetEstoque(int estoque_id)
+        {
+            var estoque = _estoqueAtualService.ObterEstoque(estoque_id);
+            if (estoque == null)
+            {
+                return NotFound("Estoque Nao encontrado");
+            }
+            return Ok(estoque);
+        }
+        [HttpGet("produto/{produto}")]
+        public IActionResult GetEstoqueByProduto(string produto)
+        {
+            var estoque = _estoqueAtualService.ObterEstoqueByProduto(produto);
+            if (estoque == null)
+            {
+                return NotFound("Estoque Nao encontrado");
+            }
+            return Ok(estoque);
+        }
+        [HttpGet("armazem/{armazem}")]
+        public IActionResult GetEstoqueByArmazem(string armazem)
+        {
+            var estoque = _estoqueAtualService.ObterEstoqueByArmazem( armazem);
+            if (estoque == null)
+            {
+                return NotFound("Estoque Nao encontrado");
+            }
+            return Ok(estoque);
+        }
+        [HttpPost]
+        public IActionResult CreateMovimento(int id_Produto, int id_armazem, int quantidade, string lote, int? dia = null, int? mes = null, int? ano = null)
+        {
+            if (dia.HasValue || mes.HasValue || ano.HasValue)
+            {
+                if (!dia.HasValue || !mes.HasValue || !ano.HasValue)
+                {
+                    return BadRequest("Para informar a data, envie dia, mes e ano ");
+                }
+                if(dia<1||dia>31|| mes<1 || mes>12 || ano < 1900)
+                {
+                    return BadRequest("Data Invalida");
+                }
+                try
+                {
+                    Console.WriteLine("esse e o erro 1");
+                    var data_validade = new DateTime(ano.Value, mes.Value, dia.Value);
+                    if (data_validade < DateTime.Now.Date)
+                    {
+                        Console.WriteLine("esse e o erro 2");
+                        return BadRequest("A data de validade nao pode ser menor que a data atual");
+                    }
+                    var estoque = _estoqueAtualService.CriarEstoque(id_Produto, id_armazem, quantidade, lote, data_validade);
+                    Console.WriteLine("esse e o erro 3");
+                    if (estoque.Contains("sucesso"))
+                    {
+                        return Ok(new { mensagem = estoque });
+                    }
+                    return NotFound(new { mensagem = estoque });
+                }
+                catch (Exception)
+                {
+                    return BadRequest("Data invalida . Verifique ano,mes e dia !");
+
+                }
+
+            }
+            var estoquesemData = _estoqueAtualService.CriarEstoque(id_Produto, id_armazem, quantidade, lote, null);
+            if (estoquesemData.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = estoquesemData });
+            }
+            return NotFound(new { mensagem = estoquesemData });
+        }
+        [HttpPut("id_estoque/{id_estoque}")]
+        public IActionResult UpdatedeEstoque(int id_estoque, int quantidade, string lote, int? ano=null, int? mes = null, int? dia = null)
+        {
+            if (dia.HasValue || mes.HasValue || ano.HasValue)
+            {
+                if (!dia.HasValue || !mes.HasValue || !ano.HasValue)
+                {
+                    return BadRequest("Para informar a data, envie dia, mes e ano ");
+                }
+                if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 1900)
+                {
+                    return BadRequest("Data Invalida");
+                }
+                try
+                {
+                    Console.WriteLine("esse e o erro 1");
+                    var data_validade = new DateTime(ano.Value, mes.Value, dia.Value);
+                    if (data_validade < DateTime.Now.Date)
+                    {
+                        Console.WriteLine("esse e o erro 2");
+                        return BadRequest("A data de validade nao pode ser menor que a data atual");
+                    }
+                    var estoque = _estoqueAtualService.Update(id_estoque, quantidade, lote, data_validade);
+                    Console.WriteLine("esse e o erro 3");
+                    if (estoque.Contains("sucesso"))
+                    {
+                        return Ok(new { mensagem = estoque });
+                    }
+                    return NotFound(new { mensagem = estoque });
+                }
+                catch (Exception)
+                {
+                    return BadRequest("Data invalida . Verifique ano,mes e dia !");
+
+                }
+
+            }
+            var estoquesemData = _estoqueAtualService.Update(id_estoque, quantidade, lote, null);
+            if (estoquesemData.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = estoquesemData });
+            }
+            return NotFound(new { mensagem = estoquesemData });
+        }
+        [HttpDelete]
+        public IActionResult DeleteEstoque(int id)
+        {
+            var estoque = _estoqueAtualService.Delete(id);
+            if (estoque.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = estoque });
+            }
+            return NotFound(new { mensagem = estoque });
+        }
+    }
+
+}
