@@ -1,0 +1,104 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace StockApi.Services.Movimentos_item
+{
+    public class Movimentos_itemService: IMovimentos_item
+    {
+        private readonly IConfiguration _configuration;
+        public Movimentos_itemService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            }
+        }
+        public IEnumerable<dynamic> ObterTodos()
+        {
+            using var connection = Connection;
+            return connection.Query("readMovimentoItens_procedure", commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterMovimentoItem(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readMovimentoItensById_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterMovimentoItemByProduto(string produto)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readMovimentoItensByProduto_procedure", new { Produto = produto }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string CriarMovimentoItem(int id_movimento, int id_produto, int quantidade, int custo_unitario ,int custo_unitario_venda)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("CreateMovimentoItem_procedure", new
+                {
+                    Id_Movimento=id_movimento,
+                    Id_Produto= id_produto,
+                    Quantidade = quantidade,
+                    Custo_Unitario = custo_unitario,
+                    Custo_Unitario_Venda = custo_unitario_venda
+                }, commandType: CommandType.StoredProcedure);
+                return "Movimento do item criado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Update(int id, int id_produto, int quantidade,int custo_unitario,int custo_unitario_venda)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("UpdateMovimentoItem_procedure", new
+                {
+                    Id_Item_Movimento =id,
+                    Id_Produto = id_produto,
+                    Quantidade = quantidade,
+                    Custo_Unitario  = custo_unitario,
+                    Custo_Unitario_Venda = custo_unitario_venda
+                }, commandType: CommandType.StoredProcedure);
+                return "Atualizado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Delete(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("DeleteMovimentosItens_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+                return "Apagado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+    }
+}
