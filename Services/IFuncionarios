@@ -1,0 +1,13 @@
+namespace StockApi.Services.Funcionario
+{
+    public interface IFuncionario
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterFuncionarios(int id);
+        dynamic? ObterFuncionarioByStatus();
+        dynamic? ObterFuncionarioByName(string nome);
+        string CriarFuncionario(string nome,string apelido, int idade, string cargo,decimal telefone, string endereco,decimal salario,bool ativo);
+        string Update(int id_funcionario,string nome, string apelido, int idade, string cargo, decimal telefone, string endereco, decimal salario, bool ativo);
+        string Delete(int id);
+    }
+}
