@@ -1,0 +1,115 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace StockApi.Services.Estoque_atual
+{
+    public class EstoqueAtualService:IEstoqueAtual
+    {
+        private readonly IConfiguration _configuration;
+        public EstoqueAtualService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            }
+        }
+        public IEnumerable<dynamic> ObterTodos()
+        {
+            using var connection = Connection;
+            return connection.Query("ReadEstoque_procedure", commandType: CommandType.StoredProcedure);
+        }
+        public dynamic? ObterEstoque(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readEstoqueById_procedure", new { Id = id }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterEstoqueByProduto(string produto)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readEstoqueByProduto_procedure", new { Nome = produto }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public dynamic? ObterEstoqueByArmazem(string armazem)
+        {
+            using var connection = Connection;
+            try
+            {
+                return connection.Query("readEstoqueByArmazem_procedure", new { Armazem_Nome = armazem }, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string CriarEstoque(int id_Produto, int id_armazem, int quantidade, string lote, DateTime? data_validade = null)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("CreateEstoque_procedure", new
+                {
+                    Id_Produto=id_Produto,
+                    Id_Armazem = id_armazem,
+                    Quantidade = quantidade,
+                    Lote = lote,
+                    Data_Validade = data_validade
+                }, commandType: CommandType.StoredProcedure);
+                return "Estoque criado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Update(int id,int quantidade, string lote, DateTime? data_validade = null)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("UpdateEstoque_procedure", new
+                {
+                    Id_Estoque = id,
+                    Quantidade = quantidade,
+                    Lote = lote,
+                    Data_Validade= data_validade
+                }, commandType: CommandType.StoredProcedure);
+                return "Atualizado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public string Delete(int id)
+        {
+            using var connection = Connection;
+            try
+            {
+                var resultado = connection.Execute("DeleteEstoque_procedure", new { Id_Estoque = id }, commandType: CommandType.StoredProcedure);
+                return "Apagado com sucesso";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+    }
+}
