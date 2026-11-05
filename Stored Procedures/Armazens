@@ -1,0 +1,114 @@
+Create Procedure readArmazens_procedure
+AS
+Begin
+   Select * From Armazens;
+End;
+Go
+
+ALTER Procedure ReadArmazensById_procedure
+   @Id Int
+As 
+Begin
+Begin try
+    IF NOT EXISTS (SELECT 1 FROM Armazens WHERE id_armazem = @Id)
+	BEGIN
+       RAISERROR('Armazem  não encontrado', 16, 1);
+       RETURN;
+    END
+  Select * From Armazens
+  Where id_armazem=@Id;
+End try
+BEGIN CATCH
+THROW;
+END CATCH
+END
+Go
+
+ALTER Procedure createArmazem_procedure
+  @Nome Nvarchar(100),
+  @Endereco Text,
+  @Responsavel Varchar(100)
+AS
+Begin
+BEGIN TRY 
+    IF @Nome IS NULL OR @Endereco IS NULL
+    BEGIN
+       RAISERROR('O Nome e o endereco do armazem sao obrigatorios',16,1);
+	   RETURN;
+	END
+    IF EXISTS (SELECT 1 FROM Armazens WHERE Nome=@Nome)
+    BEGIN 
+        RAISERROR('Ja existe um Armazem com esse nome',16,1);
+	    RETURN;
+    END 
+    INSERT INTO Armazens(Nome,Endereco,Responsavel)
+   VALUES(@Nome,@Endereco,@Responsavel)
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+Go
+
+ALTER Procedure UpdateArmazem_procedure
+   @Id Int,
+   @Nome Nvarchar(100),
+   @Endereco Text,
+   @Responsavel Nvarchar(100)
+AS
+Begin
+BEGIN TRY
+        IF @Nome IS NULL OR @Endereco IS NULL
+    BEGIN
+       RAISERROR('O Nome e o endereco do armazem sao obrigatorios',16,1);
+	   RETURN;
+	END
+    IF EXISTS (SELECT 1 FROM Armazens WHERE Nome=@Nome)
+    BEGIN 
+        RAISERROR('Ja existe um Armazem com esse nome',16,1);
+	    RETURN;
+    END 
+  Update Armazens
+  SET Nome=@Nome,Endereco=@Endereco,Responsavel=@Responsavel
+  WHERE id_armazem=@Id
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+Go
+
+ALTER Procedure DeleteArmazem_procedure
+  @Id Int
+AS
+BEGIN
+BEGIN TRY
+    IF NOT EXISTS (SELECT 1 FROM Armazens WHERE id_armazem = @Id)
+	BEGIN
+       RAISERROR('Armazem  não encontrado', 16, 1);
+       RETURN;
+    END
+  Delete From Armazens where  id_armazem=@Id
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
+Go 
+
+ALTER procedure readArmazensByName
+@Nome Varchar(50)
+As
+BEGIN
+BEGIN TRY 
+    IF NOT EXISTS (SELECT 1 FROM Armazens WHERE  UPPER(Nome) Like '%'+UPPER(@Nome)+'%')
+	BEGIN
+       RAISERROR('Armazem  não encontrado', 16, 1);
+       RETURN;
+    END
+  SELECT * from Armazens where UPPER(Nome) Like '%'+UPPER(@Nome)+'%'
+END TRY
+BEGIN CATCH
+THROW;
+END CATCH
+END
