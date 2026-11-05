@@ -1,0 +1,15 @@
+using Microsoft.AspNetCore.Components.Web;
+using StockApi.Models.Stock;
+
+namespace StockApi.Services
+{
+    public interface ICliente
+    {
+        IEnumerable<dynamic> ObterTodos();
+        dynamic? ObterCliente (int id);
+        dynamic? ObterClienteByName(string nome);
+        string Criarcliente(string nome, string apelido, string telefone, string email, bool ativo);
+        string Update(int id,string nome, string apelido,string telefone, string email,bool ativo);  
+        string Delete(int id);
+    }
+}
