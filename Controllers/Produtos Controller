@@ -1,0 +1,74 @@
+using Microsoft.AspNetCore.Mvc;
+using StockApi.Services.Categoria;
+using StockApi.Services.Produtos;
+namespace StockApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProdutosController : ControllerBase
+    {
+        private readonly IProdutos _produtoService;
+        public ProdutosController(IProdutos produtoService)
+        {
+            _produtoService = produtoService;
+        }
+        [HttpGet]
+        public IActionResult GetProdutoss()
+        {
+            var produto = _produtoService.ObterTodos();
+            return Ok(produto);
+        }
+        [HttpGet("nome/{nome}")]
+        public IActionResult GetProdutosByName(string nome)
+        {
+            var produto = _produtoService.ObterProdutoByName(nome);
+            if (produto == null)
+            {
+                return NotFound("Produto Nao encontrado");
+            }
+            return Ok(produto);
+        }
+        [HttpGet("id/{id}")]
+        public IActionResult GetProdutoById(int id)
+        {
+            var produto = _produtoService.ObterProduto(id);
+            if (produto == null)
+            {
+                return NotFound("Produto Nao encontrado");
+            }
+            return Ok(produto);
+        }
+        [HttpPost]
+        public IActionResult CreateProduto(string nome, string codigo_de_barras, int id_categoria, string unidade_de_medida, string descricao, int estoque_minimo, int estoque_maximo)
+        {
+            if (string.IsNullOrWhiteSpace(nome) || nome.Length > 50)
+                return BadRequest("O nome e obrigatorio e deve conter menos  de 50 caracteres");
+            var produto = _produtoService.CriarProduto( nome, codigo_de_barras, id_categoria,unidade_de_medida,descricao, estoque_minimo,estoque_maximo);
+            if (produto.Contains("sucesso") )
+            {
+                return Ok(new { mensagem = produto });
+            }
+            return NotFound(new { mensagem = produto });
+        }
+        [HttpPut("{id}")]
+        public IActionResult UpdatedeCategoria(int id, string nome, string codigo_de_barras, int id_categoria, string unidade_de_medida, string descricao, int estoque_minimo, int estoque_maximo)
+        {
+            var produto = _produtoService.Update(id,nome,codigo_de_barras,id_categoria,unidade_de_medida,descricao,estoque_minimo, estoque_maximo);
+            if (produto.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = produto });
+            }
+            return NotFound(new { mensagem = produto });
+        }
+        [HttpDelete]
+        public IActionResult DeleteProduto(int id)
+        {
+            var produto = _produtoService.Delete(id);
+            if (produto.Contains("sucesso"))
+            {
+                return Ok(new { mensagem = produto });
+            }
+            return NotFound(new { mensagem = produto });
+        }
+    }
+}
