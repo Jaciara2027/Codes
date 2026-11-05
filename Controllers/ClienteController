@@ -1,0 +1,90 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using StockApi.Services;
+using System.Text.RegularExpressions;
+
+namespace StockApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ClienteController : ControllerBase
+    {
+        private readonly ICliente _clienteService;
+        public ClienteController(ICliente clienteService)
+        {
+            _clienteService = clienteService;
+        }
+        [HttpGet]
+        public IActionResult GetClientes()
+        {
+            var cliente = _clienteService.ObterTodos();
+            return Ok(cliente);
+        }
+        [HttpGet("id/{id}")]
+        public IActionResult GetClientById(int id)
+        {
+            var cliente = _clienteService.ObterCliente(id);
+            if (cliente == null)
+            {
+                return NotFound("Cliente Nao encontrado");
+            }
+            return Ok(cliente);
+        }
+        [HttpGet("nome/{nome}")]
+        public IActionResult getClienteByName(string nome)
+        {
+            var cliente = _clienteService.ObterClienteByName(nome);
+            if (cliente == null)
+            {
+                return NotFound("Cliente nao encontrado");
+            }
+            return Ok(cliente);
+        }
+        [HttpPost]
+        public IActionResult CriarCliente(string nome, string apelido, string telefone, string email, bool ativo)
+        {
+            if (string.IsNullOrWhiteSpace(nome) || nome.Length > 50)
+                return BadRequest("O nome e obrigatorio e deve conter menos  de 50 caracteres");
+            if (string.IsNullOrWhiteSpace(apelido) || apelido.Length > 50)
+                return BadRequest("O Apelido  e obrigatorio e deve conter menos  de 50 caracteres");
+            if (string.IsNullOrWhiteSpace(telefone))
+                return BadRequest("O telefone e obrigatorio");
+            if (!Regex.IsMatch(telefone, @"^9\d{8}$"))
+                return BadRequest("Telefone deve ter 9 digitos comecando com 8");
+            if(!string.IsNullOrEmpty(email))
+                return BadRequest("Email invalido .");
+            if (!string.IsNullOrWhiteSpace(email))
+                if (!email.Contains("@") || !email.Contains("."))
+                    return BadRequest("Informe o email coreto!");
+            var cliente = _clienteService.Criarcliente(nome, apelido, telefone, email, ativo);
+            if (cliente == null)
+            {
+                return NotFound("O Cliente nao foi criado por favor verifique as informacoes inseridas ");
+            }
+            return Ok("cliente criado com sucesso");
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdatedeCliente(int id, string nome, string apelido, string telefone, string email, bool ativo)
+        {
+            var cliente = _clienteService.Update(id,nome, apelido, telefone, email, ativo);
+            if(cliente == null)
+            {
+                return NotFound("Cliente nao encontrado");
+            }
+            return Ok("Cliente Atualizado");
+        }
+
+        [HttpDelete]
+        public IActionResult DeleteCliente(int id)
+        {
+            var cliente = _clienteService.Delete(id);
+            if (cliente==null)
+            {
+                return NotFound("Cliente nao encontrado");
+            }
+            return Ok("Cliente Eliminado!");
+        }
+    }
+}
